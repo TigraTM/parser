@@ -74,6 +74,7 @@ func initRouter(newsSvc news.Service, parserSvc parser.Service) *mux.Router {
 	versionRout.HandleFunc("/hello", MakeHandler()).Methods(http.MethodGet)
 
 	r.PathPrefix("/parser").Handler(parser.MakeParserHandler(versionRout, parserSvc, log))
+
 	r.PathPrefix("/news").Handler(news.NewNewsHandler(versionRout, newsSvc, log))
 
 	return r

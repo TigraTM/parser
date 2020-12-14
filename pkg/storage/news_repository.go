@@ -28,6 +28,10 @@ func (nr *newsRepository) CreateNews(ctx context.Context, news news.News) error 
 	}
 	defer rows.Close()
 
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows err: %w", err)
+	}
+
 	return nil
 }
 
@@ -39,6 +43,10 @@ func (nr *newsRepository) GetNews(ctx context.Context, search string) ([]news.Ne
 		return nil, fmt.Errorf("get news: %w", err)
 	}
 	defer rows.Close()
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
 
 	ns := []news.News{}
 

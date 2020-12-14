@@ -2,7 +2,7 @@ package parser
 
 type Parser struct {
 	Link            string              `json:"link"`
-	ChildURLIsFull  bool                `json:"url_is_full"`
+	URLIsNotFull    bool                `json:"url_is_not_full"`
 	Attributes      []Attribute         `json:"attributes"`
 	ChildAttributes ChildPagesAttribute `json:"child_attributes"`
 }
