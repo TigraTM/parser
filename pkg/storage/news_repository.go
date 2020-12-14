@@ -32,9 +32,9 @@ func (nr *newsRepository) CreateNews(ctx context.Context, news news.News) error 
 }
 
 func (nr *newsRepository) GetNews(ctx context.Context, search string) ([]news.News, error) {
-	const query = ` SELECT id, title, descriptions, link FROM news WHERE title ilike  '%' || $1 || '%'`
+	const query = ` SELECT id, title, descriptions, link FROM news WHERE title ILIKE $1`
 
-	rows, err := nr.db.QueryContext(ctx, query, search)
+	rows, err := nr.db.QueryContext(ctx, query, fmt.Sprintf("%%%s%%", search))
 	if err != nil {
 		return nil, fmt.Errorf("get news: %w", err)
 	}

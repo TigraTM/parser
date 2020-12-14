@@ -3,10 +3,11 @@ package parser
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/sync/errgroup"
 
 	"parser/pkg/news"
 )
@@ -27,6 +28,7 @@ func NewService(newsSvc news.Service) Service {
 
 func (s *service) ParsingPage(ctx context.Context, data Parser) error {
 	childLinks := make(map[string]struct{})
+	ch := make(chan string)
 
 	doc, err := s.getDocument(data.Link)
 	if err != nil {
@@ -38,15 +40,38 @@ func (s *service) ParsingPage(ctx context.Context, data Parser) error {
 		doc.Find("." + attribute.DivClass).Each(func(i int, s *goquery.Selection) {
 			link, ok := s.Find("a." + attribute.AClass).Attr("href")
 			if ok {
+				if !data.ChildURLIsFull && !strings.HasPrefix(link, "https://") {
+					link = data.Link + link
+				}
 				childLinks[link] = struct{}{}
 			}
 		})
 	}
 
-	for childLink, _ := range childLinks {
-		if err := s.sendChildPages(ctx, childLink, data.ChildAttributes); err != nil {
-			return fmt.Errorf("error send child page: %w", err)
+	go func() {
+		for link, _ := range childLinks {
+			ch <- link
 		}
+		defer close(ch)
+	}()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		for link := range ch {
+			//r := time.Duration(rand.Intn(3))
+			//fmt.Println(r)
+			//time.Sleep(time.Second * r)
+			if strings.Contains(link, data.Link) {
+				if err := s.sendChildPages(ctx, link, data.ChildAttributes); err != nil {
+					return fmt.Errorf("send child pages: %w", err)
+				}
+			}
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("g wait: %w", err)
 	}
 
 	return nil
@@ -61,7 +86,7 @@ func (s *service) getDocument(link string) (*goquery.Document, error) {
 
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+		fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
@@ -92,6 +117,10 @@ func (s *service) sendChildPages(ctx context.Context, childLink string, attribut
 			title, description = t, d
 		}
 	})
+
+	description = strings.ReplaceAll(description, "\t", "")
+	description = strings.ReplaceAll(description, "\n", "")
+	description = strings.TrimSpace(description)
 
 	n := news.News{
 		Link:        childLink,

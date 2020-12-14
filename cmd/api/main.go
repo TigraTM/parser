@@ -43,7 +43,7 @@ func main() {
 	go func() {
 		fmt.Println("server is running")
 		if err := srv.ListenAndServe(); err != nil {
-			fmt.Errorf("error listen and server: %w", err)
+			log.Fatal(fmt.Errorf("error listen and server: %w", err))
 		}
 	}()
 
@@ -55,7 +55,7 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		fmt.Errorf("error server shutdown: %w", err)
+		log.Fatal(fmt.Errorf("error server shutdown: %w", err))
 	}
 
 	os.Exit(0)
