@@ -12,8 +12,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 
+	"parser/migrations"
 	"parser/pkg/config"
 	"parser/pkg/news"
 	"parser/pkg/parser"
@@ -23,7 +26,14 @@ import (
 func main() {
 	cfg := config.New()
 
-	newsRepo := storage.NewRepository(nil)
+	db, err := sqlx.Connect("postgres", cfg.GetString("DB"))
+	if err != nil {
+		log.Fatal(fmt.Errorf("db: %w", err))
+	}
+
+	db.MustExec(migrations.Schema)
+
+	newsRepo := storage.NewRepository(db)
 	newsSvc := news.NewService(newsRepo)
 	parserSvc := parser.NewService(newsSvc)
 
