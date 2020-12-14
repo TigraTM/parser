@@ -1,6 +1,5 @@
 .DS_Store
 .idea
 /bin
-/pkg
 /coverage
 *_mock.go
