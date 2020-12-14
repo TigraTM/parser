@@ -19,5 +19,5 @@ func NewService(newsRepo Repository) Service {
 }
 
 func (s *service) CreateNews(ctx context.Context, news News) error {
-	return nil
+	return s.newsRepo.CreateNews(ctx, news)
 }

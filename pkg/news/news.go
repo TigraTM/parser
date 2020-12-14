@@ -1,5 +1,9 @@
 package news
 
+import (
+	"context"
+)
+
 type News struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
@@ -8,4 +12,6 @@ type News struct {
 }
 
 type Repository interface {
+	CreateNews(ctx context.Context, news News) error
+	GetNews(ctx context.Context, search string) ([]News, error)
 }
