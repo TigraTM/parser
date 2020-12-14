@@ -6,7 +6,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-
 	"parser/pkg/news"
 )
 
@@ -33,5 +32,7 @@ func (nr *newsRepository) CreateNews(ctx context.Context, news news.News) error 
 }
 
 func (nr *newsRepository) GetNews(ctx context.Context, search string) ([]news.News, error) {
+	//const query = ` SELECT id, title, descriptions, link FROM public.news WHERE title ilike '%$1%'`
+
 	return nil, nil
 }

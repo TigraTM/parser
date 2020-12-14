@@ -5,7 +5,7 @@ create table if not exists news (
 	id serial,
     title text,
     descriptions text,
-    link integer,
+    link text,
 
 	primary key (id)
 )`

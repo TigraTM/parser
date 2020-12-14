@@ -80,9 +80,9 @@ func (s *service) sendChildPages(ctx context.Context, childLink string, attribut
 	}
 
 
-	doc.Find("." + attributes.ChildDivClass).Each(func(i int, s *goquery.Selection) {
-		title := s.Find("." + attributes.ClassTitle).Text()
-		description := s.Find("." + attributes.ClassDescription).Text()
+	doc.Find("." + attributes.ChildDivClass).Each(func(i int, _s *goquery.Selection) {
+		title := _s.Find("." + attributes.ClassTitle).Text()
+		description := _s.Find("." + attributes.ClassDescription).Text()
 
 		n := news.News{
 			Link:        childLink,
@@ -90,12 +90,10 @@ func (s *service) sendChildPages(ctx context.Context, childLink string, attribut
 			Description: description,
 		}
 
-		fmt.Println(n)
+		if err := s.newsSvc.CreateNews(ctx, n); err != nil {
+			fmt.Errorf("error create news: %w", err)
+		}
 	})
-
-	//if err := s.newsSvc.CreateNews(ctx, n); err != nil {
-	//	return fmt.Errorf("error create news: %w", err)
-	//}
 
 	return nil
 }
