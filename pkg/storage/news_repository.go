@@ -20,7 +20,7 @@ func NewRepository(db *sqlx.DB) news.Repository {
 }
 
 func (nr *newsRepository) CreateNews(ctx context.Context, news news.News) error {
-	const query = `	INSERT INTO news (title, descriptions, link) VALUES($1, $2, $3)`
+	const query = `	INSERT INTO news (title, descriptions, link) VALUES ($1, $2, $3)`
 
 	rows, err := nr.db.QueryContext(ctx, query, news.Title, news.Description, news.Link)
 	if err != nil {
@@ -32,7 +32,25 @@ func (nr *newsRepository) CreateNews(ctx context.Context, news news.News) error 
 }
 
 func (nr *newsRepository) GetNews(ctx context.Context, search string) ([]news.News, error) {
-	//const query = ` SELECT id, title, descriptions, link FROM public.news WHERE title ilike '%$1%'`
+	const query = ` SELECT id, title, descriptions, link FROM news WHERE title ilike  '%' || $1 || '%'`
 
-	return nil, nil
+	rows, err := nr.db.QueryContext(ctx, query, search)
+	if err != nil {
+		return nil, fmt.Errorf("get news: %w", err)
+	}
+	defer rows.Close()
+
+	ns := []news.News{}
+
+	for rows.Next() {
+		n := news.News{}
+
+		if err := rows.Scan(&n.ID, &n.Title, &n.Description, &n.Link); err != nil {
+			return nil, fmt.Errorf("scan events: %w", err)
+		}
+
+		ns = append(ns, n)
+	}
+
+	return ns, nil
 }

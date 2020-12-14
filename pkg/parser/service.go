@@ -74,26 +74,34 @@ func (s *service) getDocument(link string) (*goquery.Document, error) {
 }
 
 func (s *service) sendChildPages(ctx context.Context, childLink string, attributes ChildPagesAttribute) error {
+	var (
+		title string
+		description string
+	)
+
 	doc, err := s.getDocument(childLink)
 	if err != nil {
 		return fmt.Errorf("get document: %w", err)
 	}
 
-
 	doc.Find("." + attributes.ChildDivClass).Each(func(i int, _s *goquery.Selection) {
-		title := _s.Find("." + attributes.ClassTitle).Text()
-		description := _s.Find("." + attributes.ClassDescription).Text()
+		t := _s.Find("." + attributes.ClassTitle).Text()
+		d := _s.Find("." + attributes.ClassDescription).Text()
 
-		n := news.News{
-			Link:        childLink,
-			Title:       title,
-			Description: description,
-		}
-
-		if err := s.newsSvc.CreateNews(ctx, n); err != nil {
-			fmt.Errorf("error create news: %w", err)
+		if t != "" && d != "" {
+			title, description = t, d
 		}
 	})
+
+	n := news.News{
+		Link:        childLink,
+		Title:       title,
+		Description: description,
+	}
+
+	if err := s.newsSvc.CreateNews(ctx, n); err != nil {
+		return fmt.Errorf("error create news: %w", err)
+	}
 
 	return nil
 }
