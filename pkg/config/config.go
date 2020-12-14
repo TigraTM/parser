@@ -9,6 +9,8 @@ import (
 func New() *viper.Viper {
 	cfg := viper.New()
 
+	cfg.SetDefault("DELAY", 3)
+
 	// Servers part of config
 	cfg.SetDefault("LISTEN", ":8000")
 

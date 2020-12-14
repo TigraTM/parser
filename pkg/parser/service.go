@@ -3,10 +3,13 @@ package parser
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
 	"parser/pkg/news"
@@ -18,11 +21,13 @@ type Service interface {
 
 type service struct {
 	newsSvc news.Service
+	cfg     *viper.Viper
 }
 
-func NewService(newsSvc news.Service) Service {
+func NewService(newsSvc news.Service, cfg *viper.Viper) Service {
 	return &service{
 		newsSvc: newsSvc,
+		cfg:     cfg,
 	}
 }
 
@@ -58,9 +63,9 @@ func (s *service) ParsingPage(ctx context.Context, data Parser) error {
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		for link := range ch {
-			//r := time.Duration(rand.Intn(3))
-			//fmt.Println(r)
-			//time.Sleep(time.Second * r)
+			delay := time.Duration(rand.Intn(s.cfg.GetInt("DELAY")))
+			fmt.Println(delay)
+			time.Sleep(time.Second * delay)
 			if strings.Contains(link, data.Link) {
 				if err := s.sendChildPages(ctx, link, data.ChildAttributes); err != nil {
 					return fmt.Errorf("send child pages: %w", err)
@@ -100,7 +105,7 @@ func (s *service) getDocument(link string) (*goquery.Document, error) {
 
 func (s *service) sendChildPages(ctx context.Context, childLink string, attributes ChildPagesAttribute) error {
 	var (
-		title string
+		title       string
 		description string
 	)
 

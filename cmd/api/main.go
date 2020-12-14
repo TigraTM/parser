@@ -35,7 +35,7 @@ func main() {
 
 	newsRepo := storage.NewRepository(db)
 	newsSvc := news.NewService(newsRepo)
-	parserSvc := parser.NewService(newsSvc)
+	parserSvc := parser.NewService(newsSvc, cfg)
 
 	r := initRouter(newsSvc, parserSvc)
 	srv := initServer(cfg, r)
