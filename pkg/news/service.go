@@ -2,6 +2,8 @@ package news
 
 import (
 	"context"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Service interface {
@@ -11,11 +13,13 @@ type Service interface {
 
 type service struct {
 	newsRepo Repository
+	log      *logrus.Logger
 }
 
-func NewService(newsRepo Repository) Service {
+func NewService(newsRepo Repository, log *logrus.Logger) Service {
 	return &service{
 		newsRepo: newsRepo,
+		log:      log,
 	}
 }
 

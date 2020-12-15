@@ -1,0 +1,116 @@
+swagger: '2.0'
+
+info:
+  version: 0.1.0
+  title: "News parser."
+  description: ""
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /v1
+
+definitions:
+
+  Error:
+    type: object
+    required:
+      - error
+    properties:
+      error:
+        type: string
+
+  attribute:
+    type: object
+    properties:
+      div_class:
+        type: string
+        example: daynews__item
+      a_class:
+        type: string
+        example: photo
+
+  child_attributes:
+    type: object
+    properties:
+      child_div_class:
+        type: string
+        example: layout
+      class_title:
+        type: string
+        example: hdr_collapse
+      class_description:
+        type: string
+        example: article__item_html
+
+  news:
+    type: object
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+      descriptions:
+        type: string
+      link:
+        type: string
+
+  data:
+    type: object
+    properties:
+      link:
+        type: string
+        example: https://news.mail.ru/
+      url_is_not_full:
+        type: boolean
+        default: false
+      attributes:
+        type: array
+        items:
+          $ref: '#/definitions/attribute'
+      child_attributes:
+        $ref: '#/definitions/child_attributes'
+
+responses:
+
+  GenericError:
+    description: Generic error response.
+    schema:
+      $ref: '#/definitions/Error'
+
+  NoContent:
+    description: The server successfully processed the request and is not returning any content.
+
+paths:
+
+  /parser:
+    post:
+      description: Parsing news according to the specified parameters
+      parameters:
+        - name: args
+          in: body
+          schema:
+            $ref: '#/definitions/data'
+      responses:
+        200:
+          description: OK
+        default: {$ref: '#/responses/GenericError'}
+
+  /news:
+    get:
+      description: News search.
+      parameters:
+        - name: search
+          in: query
+          required: true
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/news'
+        default: {$ref: '#/responses/GenericError'}

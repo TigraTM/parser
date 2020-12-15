@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"parser/migrations"
@@ -23,7 +23,12 @@ import (
 	"parser/pkg/storage"
 )
 
+var log = logrus.New()
+
 func main() {
+	log.Out = os.Stdout
+	log.SetFormatter(&logrus.JSONFormatter{})
+
 	cfg := config.New()
 
 	db, err := sqlx.Connect("postgres", cfg.GetString("DB"))
@@ -34,8 +39,8 @@ func main() {
 	db.MustExec(migrations.Schema)
 
 	newsRepo := storage.NewRepository(db)
-	newsSvc := news.NewService(newsRepo)
-	parserSvc := parser.NewService(newsSvc)
+	newsSvc := news.NewService(newsRepo, log)
+	parserSvc := parser.NewService(newsSvc, cfg, log)
 
 	r := initRouter(newsSvc, parserSvc)
 	srv := initServer(cfg, r)
@@ -68,8 +73,9 @@ func initRouter(newsSvc news.Service, parserSvc parser.Service) *mux.Router {
 
 	versionRout.HandleFunc("/hello", MakeHandler()).Methods(http.MethodGet)
 
-	r.PathPrefix("/parser").Handler(parser.MakeParserHandler(versionRout, parserSvc))
-	r.PathPrefix("/news").Handler(news.NewNewsHandler(versionRout, newsSvc))
+	r.PathPrefix("/parser").Handler(parser.MakeParserHandler(versionRout, parserSvc, log))
+
+	r.PathPrefix("/news").Handler(news.NewNewsHandler(versionRout, newsSvc, log))
 
 	return r
 }
