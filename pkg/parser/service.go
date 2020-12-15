@@ -36,7 +36,6 @@ func NewService(newsSvc news.Service, cfg *viper.Viper, log *logrus.Logger) Serv
 
 func (s *service) ParsingPage(ctx context.Context, data Parser) error {
 	childLinks := make(map[string]struct{})
-	ch := make(chan string)
 
 	doc, err := s.getDocument(data.Link)
 	if err != nil {
@@ -56,44 +55,25 @@ func (s *service) ParsingPage(ctx context.Context, data Parser) error {
 		})
 	}
 
-
-	go func() {
-		for link, _ := range childLinks {
-			ch <- link
-		}
-		defer close(ch)
-	}()
-
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		for link := range ch {
+
+	for link, _ := range childLinks {
+		if strings.Contains(link, data.Link) {
+			link := link
 			delay := s.cfg.GetInt("DELAY")
 			if delay != 0 {
 				timeDelay := time.Duration(rand.Intn(delay))
 				time.Sleep(time.Second * timeDelay)
 			}
-			if strings.Contains(link, data.Link) {
+			g.Go(func() error {
 				if err := s.sendChildPages(ctx, link, data.ChildAttributes); err != nil {
+					s.log.Errorf("error send child page: %s", err)
 					return fmt.Errorf("send child pages: %w", err)
 				}
-			}
+				return nil
+			})
 		}
-		return nil
-	})
-
-	//g, ctx := errgroup.WithContext(ctx)
-	//
-	//for link, _ := range childLinks {
-	//	if strings.Contains(link, data.Link) {
-	//		g.Go(func() error {
-	//			if err := s.sendChildPages(ctx, link, data.ChildAttributes); err != nil {
-	//				s.log.Errorf("error send child page: %s", err)
-	//				return fmt.Errorf("send child pages: %w", err)
-	//			}
-	//			return nil
-	//		})
-	//	}
-	//}
+	}
 
 	if err := g.Wait(); err != nil {
 		s.log.Errorf("error errorgroup wait: %s", err)
