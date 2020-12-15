@@ -32,7 +32,7 @@ func ParserHandler(parserSvc Service, log *logrus.Logger) func(w http.ResponseWr
 			return
 		}
 
-		respond(w, r, http.StatusOK, "Новости получены", log)
+		respond(w, r, http.StatusOK, nil, log)
 	}
 }
 
